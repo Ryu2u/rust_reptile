@@ -20,7 +20,7 @@ async fn main() -> Result<(), Error> {
 }
 
 async fn parse_book_directory(base_url: &str) {
-    let base_url = format!("{}{}", base_url, "/218988");
+    let base_url = format!("{}{}", base_url, "/195803");
 
     let res = reqwest::get(&base_url).await.unwrap();
     let res = res.text().await.unwrap();
@@ -34,7 +34,7 @@ async fn parse_book_directory(base_url: &str) {
     let mut handle = vec![];
     for a_element in a_vec {
         let href = a_element.value().attr("href").unwrap();
-        info!("{} - {}",a_element.inner_html(), href);
+        info!("{} - {}", a_element.inner_html(), href);
         handle.push(parse_book_content(&base_url, href, a_element.inner_html().clone()).await);
     }
     for t in handle {
@@ -47,14 +47,28 @@ async fn parse_book_directory(base_url: &str) {
 
 async fn parse_book_content(base_url: &str, tail: &str, title: String) -> Option<JoinHandle<()>> {
     let base_url = format!("{}/{}", base_url, tail);
-    let res = reqwest::get(&base_url).await.unwrap();
-    let res = res.text().await.unwrap();
+    let mut res = String::new();
+    let mut count = 0;
+    while res.trim().is_empty() && count < 3 {
+        let rsp = reqwest::get(&base_url).await.unwrap();
+        res = rsp.text().await.unwrap();
+        count += 1;
+    }
+    if count >= 3 {
+        error!(
+            "download over 3 times, url : [{}] tail : [{}]",
+            base_url, tail
+        );
+    }
     let doc = Html::parse_document(&res);
     let selector = Selector::parse(".content").unwrap();
     let vec: Vec<_> = doc.select(&selector).collect();
     let content = match vec.first() {
         None => {
-            error!("download title : [{}] failed --> url : [{}] tail : [{}]", title, base_url,tail);
+            error!(
+                "download title : [{}] failed --> url : [{}] tail : [{}]",
+                title, base_url, tail
+            );
             return None;
         }
         Some(v) => v,
@@ -67,7 +81,7 @@ async fn parse_book_content(base_url: &str, tail: &str, title: String) -> Option
         }
     });
     str.remove(0);
-    str.insert(0, format!("{}\n", title));
+    str.insert(0, format!("{}\n\n", title));
     Some(tokio::spawn(async move {
         std::fs::File::create(format!("dir/{}.txt", title.replace(" ", "_")))
             .unwrap()
@@ -82,9 +96,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_book_content() {
-        let base_url = "http://www.qiqixs.info/218988/";
-        let res =
-            parse_book_content(base_url, "76908701.html", "250.我们一起去死吧～".to_string()).await;
+        let base_url = "http://www.qiqixs.info/195803/";
+        let res = parse_book_content(base_url, "", "".to_string()).await;
         res.unwrap().await.unwrap();
     }
 }
