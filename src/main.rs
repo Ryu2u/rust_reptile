@@ -1,5 +1,7 @@
+use log::error;
 use scraper::{Html, Selector};
 use std::io::{Error, Write};
+use tokio::task::JoinHandle;
 use tracing::info;
 
 #[tokio::main]
@@ -10,7 +12,7 @@ async fn main() -> Result<(), Error> {
         .pretty()
         .init();
     info!("=========== initializing ========");
-    let base_url = "http://www.qiqixs.info";
+    let base_url = "http://www.qiqixs.info/";
 
     parse_book_directory(base_url).await;
 
@@ -18,48 +20,71 @@ async fn main() -> Result<(), Error> {
 }
 
 async fn parse_book_directory(base_url: &str) {
-    let base_url = format!("{}{}", base_url, "/27563");
+    let base_url = format!("{}{}", base_url, "/218988");
 
     let res = reqwest::get(&base_url).await.unwrap();
     let res = res.text().await.unwrap();
     let doc = Html::parse_document(&res);
     let selector = Selector::parse("dl").unwrap();
-    info!("{:?}", selector);
     let res = doc.select(&selector);
     let html_vec: Vec<_> = res.map(|v| v).collect();
-    info!("{:?}", html_vec);
     let dl = html_vec.first().unwrap();
     let a_selector = Selector::parse("a").unwrap();
     let a_vec: Vec<_> = dl.select(&a_selector).collect();
+    let mut handle = vec![];
     for a_element in a_vec {
-        info!("{:?}", a_element);
-        info!("{}", a_element.inner_html());
         let href = a_element.value().attr("href").unwrap();
-        info!("{}", href);
-        parse_book_content(&base_url, href, a_element.inner_html().clone()).await;
+        info!("{} - {}",a_element.inner_html(), href);
+        handle.push(parse_book_content(&base_url, href, a_element.inner_html().clone()).await);
+    }
+    for t in handle {
+        if let None = t {
+        } else if let Some(v) = t {
+            v.await.unwrap();
+        }
     }
 }
 
-async fn parse_book_content(base_url: &str, tail: &str, title: String) {
+async fn parse_book_content(base_url: &str, tail: &str, title: String) -> Option<JoinHandle<()>> {
     let base_url = format!("{}/{}", base_url, tail);
     let res = reqwest::get(&base_url).await.unwrap();
     let res = res.text().await.unwrap();
     let doc = Html::parse_document(&res);
     let selector = Selector::parse(".content").unwrap();
     let vec: Vec<_> = doc.select(&selector).collect();
-    info!("{:?}", vec);
-    let content = vec.first().unwrap();
-    let mut str = content.text().collect::<Vec<&str>>();
+    let content = match vec.first() {
+        None => {
+            error!("download title : [{}] failed --> url : [{}] tail : [{}]", title, base_url,tail);
+            return None;
+        }
+        Some(v) => v,
+    };
+    let str = content.text().collect::<Vec<&str>>();
     let mut str: Vec<String> = str.iter().map(|v| v.to_string()).collect();
     str.iter_mut().for_each(|v| {
-        *v = v.replace(" ","");
-        v.insert_str(0,"  ");
+        if !v.trim().is_empty() {
+            *v = v.replace(" ", "");
+        }
     });
     str.remove(0);
-    str.insert(0, title.to_string());
-    str.iter().for_each(|v| info!("{}", v));
-    std::fs::File::create(format!("dir/{}.txt", title.replace(" ", "_")))
-        .unwrap()
-        .write_all(str.join("\n").as_bytes())
-        .unwrap();
+    str.insert(0, format!("{}\n", title));
+    Some(tokio::spawn(async move {
+        std::fs::File::create(format!("dir/{}.txt", title.replace(" ", "_")))
+            .unwrap()
+            .write_all(str.join("  ").as_bytes())
+            .unwrap();
+    }))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_book_content() {
+        let base_url = "http://www.qiqixs.info/218988/";
+        let res =
+            parse_book_content(base_url, "76908701.html", "250.我们一起去死吧～".to_string()).await;
+        res.unwrap().await.unwrap();
+    }
 }
