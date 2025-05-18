@@ -1,7 +1,7 @@
 use log::error;
 use scraper::{Html, Selector};
 use std::io::{Error, Write};
-use tokio::task::JoinHandle;
+use std::path::Path;
 use tracing::info;
 
 #[tokio::main]
@@ -14,13 +14,14 @@ async fn main() -> Result<(), Error> {
     info!("=========== initializing ========");
     let base_url = "http://www.qiqixs.info/";
 
-    parse_book_directory(base_url).await;
+    let book_str = "218988";
+    parse_book_directory(base_url, book_str).await;
 
     Ok(())
 }
 
-async fn parse_book_directory(base_url: &str) {
-    let base_url = format!("{}{}", base_url, "/195803");
+async fn parse_book_directory(base_url: &str, book_str: &str) {
+    let base_url = format!("{}/{}", base_url, book_str);
 
     let res = reqwest::get(&base_url).await.unwrap();
     let res = res.text().await.unwrap();
@@ -32,20 +33,21 @@ async fn parse_book_directory(base_url: &str) {
     let a_selector = Selector::parse("a").unwrap();
     let a_vec: Vec<_> = dl.select(&a_selector).collect();
     let mut handle = vec![];
-    for a_element in a_vec {
-        let href = a_element.value().attr("href").unwrap();
+    for (index,a_element) in a_vec.iter().enumerate() {
+        let href = a_element.value().attr("href").unwrap().to_string();
         info!("{} - {}", a_element.inner_html(), href);
-        handle.push(parse_book_content(&base_url, href, a_element.inner_html().clone()).await);
+        let html = a_element.inner_html().clone();
+        let base_url = base_url.clone();
+        handle.push(tokio::spawn(async move {
+            parse_book_content(&base_url, &href, html,index).await;
+        }));
     }
     for t in handle {
-        if let None = t {
-        } else if let Some(v) = t {
-            v.await.unwrap();
-        }
+        t.await.unwrap();
     }
 }
 
-async fn parse_book_content(base_url: &str, tail: &str, title: String) -> Option<JoinHandle<()>> {
+async fn parse_book_content(base_url: &str, tail: &str, title: String,index: usize) -> Option<()>{
     let base_url = format!("{}/{}", base_url, tail);
     let mut res = String::new();
     let mut count = 0;
@@ -82,12 +84,14 @@ async fn parse_book_content(base_url: &str, tail: &str, title: String) -> Option
     });
     str.remove(0);
     str.insert(0, format!("{}\n\n", title));
-    Some(tokio::spawn(async move {
-        std::fs::File::create(format!("dir/{}.txt", title.replace(" ", "_")))
-            .unwrap()
-            .write_all(str.join("  ").as_bytes())
-            .unwrap();
-    }))
+    if !Path::exists(Path::new("dir")) {
+        std::fs::create_dir_all("dir").unwrap();
+    }
+    std::fs::File::create(format!("dir/{}_{}.txt",index, title.replace(" ", "_")))
+        .unwrap()
+        .write_all(str.join("  ").as_bytes())
+        .unwrap();
+    Some(())
 }
 
 #[cfg(test)]
@@ -97,7 +101,9 @@ mod tests {
     #[tokio::test]
     async fn test_book_content() {
         let base_url = "http://www.qiqixs.info/195803/";
-        let res = parse_book_content(base_url, "", "".to_string()).await;
-        res.unwrap().await.unwrap();
+        let tail = "";
+        let title = "".to_string();
+        let res = parse_book_content(base_url, tail, title,1).await;
+        res.unwrap();
     }
 }
