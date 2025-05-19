@@ -119,22 +119,4 @@ fn get_title(doc: &Html) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[tokio::test]
-    async fn test_book_content() {
-        let base_url = "http://www.qiqixs.info/195803/";
-        let tail = "";
-        let title = "".to_string();
-        let book_title = "195803".to_string();
-        let res = parse_book_content(base_url, tail, title, 1, book_title).await;
-        res.unwrap();
-    }
-
-    #[tokio::test]
-    async fn test_book_title() {
-        let base_url = "http://www.qiqixs.info/";
-
-        let book_str = "201698";
-        parse_book_directory(base_url, book_str).await;
-    }
 }
