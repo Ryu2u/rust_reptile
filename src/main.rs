@@ -163,5 +163,4 @@ async fn merge_book(_dir_path: &str) {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 }
