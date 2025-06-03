@@ -15,7 +15,7 @@ async fn main() -> Result<(), Error> {
     info!("=========== initializing ========");
     let base_url = "http://www.qiqixs.info/";
 
-    let book_str = "218556";
+    let book_str = "195803";
     parse_book_directory(base_url, book_str).await;
 
     Ok(())
@@ -109,7 +109,8 @@ async fn parse_book_content(
         let mut str: Vec<String> = str.iter().map(|v| v.to_string()).collect();
         str.iter_mut().for_each(|v| {
             if !v.trim().is_empty() {
-                *v = v.replace(" ", "");
+                *v = v.replace('\u{00a0}', "");
+                *v = v.replace('\u{2003}', "");
             }
         });
         str.remove(0);
