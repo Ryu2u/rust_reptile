@@ -1,6 +1,6 @@
 use log::error;
 use scraper::{Html, Selector};
-use std::io::{Error, Write};
+use std::io::{BufReader, BufWriter, Error, Read, Write};
 use std::path::Path;
 use std::time::Duration;
 use tracing::info;
@@ -21,7 +21,7 @@ async fn main() -> Result<(), Error> {
     Ok(())
 }
 
-async fn parse_book_directory(base_url: &str, book_str: &str) {
+async fn parse_book_directory(base_url: &str, book_str: &str) -> Option<String> {
     let base_url = format!("{}{}", base_url, book_str);
 
     let http_client = reqwest::ClientBuilder::new()
@@ -32,7 +32,7 @@ async fn parse_book_directory(base_url: &str, book_str: &str) {
     let res = http_client.get(&base_url).send().await.unwrap();
     if res.status().as_u16() != 200 {
         error!("request failed: {}", res.status());
-        return;
+        return None;
     }
     info!("status: {}", res.status().as_str());
     let res = res.text().await.unwrap();
@@ -50,7 +50,7 @@ async fn parse_book_directory(base_url: &str, book_str: &str) {
         let html = a_element.inner_html().clone();
         let base_url = base_url.clone();
         let book_title = book_title.clone();
-        tokio::time::sleep(Duration::from_millis(100)).await;
+        tokio::time::sleep(Duration::from_millis(500)).await;
         handle.push(tokio::spawn(async move {
             parse_book_content(&base_url, &href, html, index, book_title).await
         }));
@@ -63,6 +63,7 @@ async fn parse_book_directory(base_url: &str, book_str: &str) {
         }
     }
     error!("total failed [{}] -> [{:?}]", err_str.len(), &err_str);
+    Some(book_title)
 }
 
 async fn parse_book_content(
@@ -72,6 +73,7 @@ async fn parse_book_content(
     index: usize,
     book_title: String,
 ) -> Result<(), String> {
+    let old_url = base_url;
     let base_url = format!("{}/{}", base_url, tail);
     let mut flag = false;
     for count in 0..20 {
@@ -85,7 +87,6 @@ async fn parse_book_content(
             continue;
         }
         let rsp = res_rsp.unwrap();
-
         if rsp.status().as_u16() != 200 {
             error!("[{count}]fetch status is {}", rsp.status().as_str());
             continue;
@@ -133,8 +134,8 @@ async fn parse_book_content(
     }
     if !flag {
         error!(
-            "overtime [{}] failed --> url : [{}] tail : [{}]",
-            article_title, base_url, tail
+            "overtime \"{}\",\"{}\",\"{}\".to_string(),{},\"{}\".to_string() ",
+            old_url, tail, article_title, index, book_title
         );
         Err(article_title)
     } else {
@@ -158,10 +159,76 @@ fn get_title(doc: &Html) -> String {
 }
 
 #[allow(unused)]
-async fn merge_book(_dir_path: &str) {
-    unimplemented!()
+fn merge_book(book_title: &str) {
+    let path = Path::new(book_title);
+    let total_file = std::fs::OpenOptions::new()
+        .append(true)
+        .create(true)
+        .open(format!("{}.txt", book_title))
+        .unwrap();
+    let mut writer = BufWriter::new(total_file);
+    let mut bytes = [0; 1024];
+    match std::fs::read_dir(path) {
+        Ok(dir) => dir.for_each(|v| {
+            match v {
+                Ok(dir_entry) => {
+                    let raw = std::fs::File::open(dir_entry.path()).unwrap();
+                    let mut reader = BufReader::new(raw);
+                    loop {
+                        let n = reader.read(&mut bytes).unwrap();
+                        if n == 0 {
+                            info!("write file success -> {}", dir_entry.path().display());
+                            break;
+                        }
+                        writer.write_all(&bytes[..n]).unwrap();
+                    }
+                }
+                Err(error) => {
+                    error!("get dir entry error -> {}", error);
+                }
+            }
+            writer.write(b"\n\n").unwrap();
+        }),
+        Err(e) => {
+            error!("merge book failed -> {}", e);
+        }
+    };
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::{merge_book, parse_book_content};
+    use tracing::info;
+
+    #[test]
+    fn test_merge_book() {
+        merge_book("乱世书");
+    }
+
+    #[tokio::test]
+    async fn test_parse_book_content() {
+        tracing_subscriber::fmt()
+            .with_writer(std::io::stdout)
+            .with_max_level(tracing::Level::INFO)
+            .pretty()
+            .init();
+        info!("=========== initializing ========");
+
+        loop {
+            match parse_book_content(
+                "http://www.qiqixs.info/195803",
+                "66034609.html",
+                "第二百六十章 剥茧抽丝".to_string(),
+                267,
+                "乱世书".to_string(),
+            )
+            .await
+            {
+                Ok(_) => {
+                    break;
+                }
+                Err(_) => {}
+            }
+        }
+    }
 }
