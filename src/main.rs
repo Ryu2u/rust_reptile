@@ -1,12 +1,16 @@
+mod database;
+
 use log::error;
 use scraper::{Html, Selector};
 use std::io::{BufReader, BufWriter, Error, Read, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::str::FromStr;
 use std::time::Duration;
 use tracing::info;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
+    dotenv::dotenv().ok();
     tracing_subscriber::fmt()
         .with_writer(std::io::stdout)
         .with_max_level(tracing::Level::INFO)
@@ -15,7 +19,7 @@ async fn main() -> Result<(), Error> {
     info!("=========== initializing ========");
     let base_url = "http://www.qiqixs.info/";
 
-    let book_str = "195803";
+    let book_str = "234621";
     parse_book_directory(base_url, book_str).await;
 
     Ok(())
@@ -167,32 +171,60 @@ fn merge_book(book_title: &str) {
         .open(format!("{}.txt", book_title))
         .unwrap();
     let mut writer = BufWriter::new(total_file);
+
+    let mut file_vec: Vec<String> = vec![];
     let mut bytes = [0; 1024];
     match std::fs::read_dir(path) {
-        Ok(dir) => dir.for_each(|v| {
-            match v {
-                Ok(dir_entry) => {
-                    let raw = std::fs::File::open(dir_entry.path()).unwrap();
-                    let mut reader = BufReader::new(raw);
-                    loop {
-                        let n = reader.read(&mut bytes).unwrap();
-                        if n == 0 {
-                            info!("write file success -> {}", dir_entry.path().display());
-                            break;
-                        }
-                        writer.write_all(&bytes[..n]).unwrap();
-                    }
-                }
-                Err(error) => {
-                    error!("get dir entry error -> {}", error);
-                }
+        Ok(dir) => dir.for_each(|v| match v {
+            Ok(dir_entry) => {
+                let file_name = dir_entry.file_name();
+                let file_name = file_name.to_str().unwrap();
+                file_vec.push(file_name.to_string());
             }
-            writer.write(b"\n\n").unwrap();
+            Err(error) => {
+                error!("get dir entry error -> {}", error);
+            }
         }),
         Err(e) => {
             error!("merge book failed -> {}", e);
         }
     };
+
+    file_vec.sort_by(|a, b| {
+        let a_split: Vec<&str> = a.split("_").collect();
+        let b_split: Vec<&str> = b.split("_").collect();
+        let a_num = i32::from_str(a_split[0]).map_or_else(
+            |e| {
+                error!("parse num error -> {}", e);
+                -1
+            },
+            |v| v,
+        );
+        let b_num = i32::from_str(b_split[0]).map_or_else(
+            |e| {
+                error!("parse num error -> {}", e);
+                -1
+            },
+            |v| v,
+        );
+        a_num.cmp(&b_num)
+    });
+    file_vec.iter().for_each(|v| println!("{}", v));
+
+    file_vec.iter().for_each(|path| {
+        let raw = std::fs::File::open(format!("{}/{}", book_title, path))
+            .expect(&format!("file [{}] open failed! ", path));
+        let mut reader = BufReader::new(raw);
+        loop {
+            let n = reader.read(&mut bytes).unwrap();
+            if n == 0 {
+                info!("write file success -> {}", path);
+                break;
+            }
+            writer.write_all(&bytes[..n]).unwrap();
+        }
+        writer.write(b"\n\n").unwrap();
+    })
 }
 
 #[cfg(test)]
@@ -202,7 +234,7 @@ mod tests {
 
     #[test]
     fn test_merge_book() {
-        merge_book("乱世书");
+        merge_book("借剑");
     }
 
     #[tokio::test]
