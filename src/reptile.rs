@@ -5,14 +5,15 @@ use futures::StreamExt;
 use futures::stream::FuturesUnordered;
 use log::error;
 use reqwest::header;
-use scraper::{Html, Node, Selector};
+use scraper::{ElementRef, Html, Node, Selector};
 use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::Path;
 use std::str::FromStr;
 use std::time::Duration;
 use tracing::info;
 
-pub async fn parse_book_directory(base_url: &str, book_str: &str, book_id: i64) -> Option<String> {
+pub async fn parse_book_directory(book_str: &str, book_id: i64) -> Option<String> {
+    let base_url = "http://www.qiqixs.info/";
     let base_url = format!("{}{}", base_url, book_str);
     let tail = "/?_=1772519989725";
     let http_client = reqwest::ClientBuilder::new()
@@ -33,25 +34,22 @@ pub async fn parse_book_directory(base_url: &str, book_str: &str, book_id: i64) 
     let doc = get_text_from_response(res).await.unwrap();
     let book_title = get_title(&doc);
     info!("title -> {}", book_title);
-    // 获取所有目录和目录的url
-    let selector = Selector::parse("dl").unwrap();
-    let html_vec: Vec<_> = doc.select(&selector).map(|v| v).collect();
-    let dl = html_vec.first().unwrap();
-    let a_selector = Selector::parse("a").unwrap();
-    let a_vec: Vec<_> = dl.select(&a_selector).collect();
     let mut tasks = FuturesUnordered::new();
-    for (index, a_element) in a_vec.into_iter().enumerate() {
-        let href = a_element.value().attr("href").unwrap().to_string();
-        let html = a_element.inner_html().to_string(); // clone 出纯 String
-        let base_url = base_url.clone();
-        let book_title = book_title.clone();
-        let id = book_id;
-
-        tasks.push(async move {
-            tokio::time::sleep(Duration::from_millis(500)).await;
-            parse_book_content(&base_url, &href, &html, index, &book_title, id).await
-        });
-        break;
+    // 获取所有目录和目录的url
+    let dl_selector = Selector::parse("div.list dl").unwrap();
+    let a_selector = Selector::parse("a").unwrap();
+    for dl in doc.select(&dl_selector) {
+        for (index, a_element) in dl.select(&a_selector).enumerate() {
+            let href = a_element.value().attr("href").unwrap().to_string();
+            let html = a_element.inner_html().to_string(); // clone 出纯 String
+            let base_url = base_url.clone();
+            let book_title = book_title.clone();
+            let id = book_id;
+            tasks.push(async move {
+                tokio::time::sleep(Duration::from_millis(500)).await;
+                parse_book_content(&base_url, &href, &html, index, &book_title, id).await
+            });
+        }
     }
 
     let mut err_str = vec![];
@@ -80,7 +78,7 @@ async fn parse_book_content(
         let mut headers = header::HeaderMap::new();
         headers.insert(
             header::CONTENT_TYPE,
-            header::HeaderValue::from_static("text/htm"),
+            header::HeaderValue::from_static("text/html"),
         );
         let http_client = reqwest::ClientBuilder::new()
             .connect_timeout(Duration::from_secs(3))
@@ -152,10 +150,10 @@ async fn parse_book_content(
             std::fs::create_dir_all(&book_title).unwrap();
         }
         let file_path = format!(
-            "{}/{}_{}.txt",
+            "{}/{}.txt",
             book_title,
             index,
-            article_title.replace(" ", "_")
+            // article_title.replace(" ", "_")
         );
         let pool = get_mysql_connection().await;
         let book_chapter = BookChapter {
@@ -164,7 +162,7 @@ async fn parse_book_content(
             title: article_title.to_string(),
             chapter_index: index as i32,
             word_count: 0,
-            file_path: Some(file_path.to_string()),
+            file_path: Some(format!("/{}", file_path)),
             created_at: "".to_string(),
         };
         BookChapter::create_chapter(&pool, &book_chapter)

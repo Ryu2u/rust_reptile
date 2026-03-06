@@ -1,4 +1,6 @@
+use chrono::{NaiveDate, NaiveDateTime};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use sqlx::{FromRow, MySql, Pool};
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -16,8 +18,8 @@ pub struct Book {
     pub view_count: i64,             // bigint DEFAULT 0
     pub price: i32,                  // int NOT NULL DEFAULT 0
     pub is_deleted: i32,             // int NOT NULL DEFAULT 0
-    pub created_at: String,          // datetime
-    pub updated_at: String,          // datetime
+    pub created_at: chrono::NaiveDateTime,          // datetime
+    pub updated_at: chrono::NaiveDateTime,          // datetime
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -59,6 +61,47 @@ pub struct Bookshelf {
     pub created_at: String,           // datetime -> String
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct BookRanking {
+    pub id: i64,
+    pub book_id: i64,
+    pub rank_type: String,
+    pub rank: i32,
+    pub score: i64,
+    pub extra_data: Option<Value>,
+    pub period: Option<String>,
+    pub stat_date: Option<NaiveDate>,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum RankType {
+    HotSales,
+    NewBook,
+    Finish,
+    Collect,
+    View,
+    Comment,
+    Update,
+    WordCount,
+}
+
+impl RankType {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::HotSales => "hotsales",
+            Self::NewBook => "newbook",
+            Self::Finish => "finish",
+            Self::Collect => "collect",
+            Self::View => "view",
+            Self::Comment => "comment",
+            Self::Update => "update",
+            Self::WordCount => "wordcount",
+        }
+    }
+}
+
 impl Book {
     pub async fn create_book(pool: &Pool<MySql>, book: &Book) -> Result<u64, sqlx::Error> {
         let result = sqlx::query(
@@ -89,6 +132,13 @@ impl Book {
     pub async fn get_book_by_id(pool: &Pool<MySql>, id: i64) -> Result<Option<Book>, sqlx::Error> {
         sqlx::query_as::<_, Book>("SELECT * FROM t_book WHERE id = ? AND is_deleted = 0")
             .bind(id)
+            .fetch_optional(pool)
+            .await
+    }
+
+    pub async fn get_book_by_name(pool: &Pool<MySql>, name: &str) -> Result<Option<Book>, sqlx::Error> {
+        sqlx::query_as::<_, Book>("SELECT * FROM t_book WHERE name = ? AND is_deleted = 0")
+            .bind(name)
             .fetch_optional(pool)
             .await
     }
@@ -233,4 +283,117 @@ impl Bookshelf {
         .fetch_all(pool)
         .await
     }
+}
+
+
+
+impl BookRanking{
+    pub async fn insert_ranking(
+        pool: &sqlx::MySqlPool,
+        ranking: &BookRanking,
+    ) -> Result<u64, sqlx::Error> {
+        let result = sqlx::query(
+            r#"
+        INSERT INTO t_book_ranking
+        (book_id, rank_type, `rank`, score, extra_data, period, stat_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        "#
+        )
+            .bind(ranking.book_id)
+            .bind(&ranking.rank_type)
+            .bind(ranking.rank)
+            .bind(ranking.score)
+            .bind(&ranking.extra_data)
+            .bind(&ranking.period)
+            .bind(&ranking.stat_date)
+            .execute(pool)
+            .await?;
+
+        Ok(result.rows_affected())
+    }
+
+    pub async fn get_top_list(
+        pool: &sqlx::MySqlPool,
+        rank_type: &str,
+        period: &str,
+        stat_date: Option<NaiveDate>,
+        limit: i64,
+    ) -> Result<Vec<BookRanking>, sqlx::Error> {
+        let list = sqlx::query_as::<_, BookRanking>(
+            r#"
+        SELECT *
+        FROM t_book_ranking
+        WHERE rank_type = ?
+        AND period = ?
+        AND (stat_date <=> ?)
+        ORDER BY rank ASC
+        LIMIT ?
+        "#
+        )
+            .bind(rank_type)
+            .bind(period)
+            .bind(stat_date)
+            .bind(limit)
+            .fetch_all(pool)
+            .await?;
+        Ok(list)
+    }
+
+    pub async fn exists(
+        pool: &sqlx::MySqlPool,
+        rank_type: &str,
+        book_id: i64,
+        period: &str,
+        stat_date: Option<chrono::NaiveDate>,
+    ) -> Result<bool, sqlx::Error> {
+        let result: Option<(i32,)> = sqlx::query_as(
+            r#"
+        SELECT 1
+        FROM t_book_ranking
+        WHERE rank_type = ?
+          AND book_id = ?
+          AND period = ?
+          AND stat_date <=> ?
+        LIMIT 1
+        "#
+        )
+            .bind(rank_type)
+            .bind(book_id)
+            .bind(period)
+            .bind(stat_date)
+            .fetch_optional(pool)
+            .await?;
+
+        Ok(result.is_some())
+    }
+
+    pub async fn upsert_ranking(
+        pool: &sqlx::MySqlPool,
+        ranking: &BookRanking,
+    ) -> Result<u64, sqlx::Error> {
+        let result = sqlx::query(
+            r#"
+        INSERT INTO t_book_ranking
+        (book_id, rank_type, rank, score, extra_data, period, stat_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+            rank = VALUES(rank),
+            score = VALUES(score),
+            extra_data = VALUES(extra_data),
+            updated_at = CURRENT_TIMESTAMP
+        "#
+        )
+            .bind(ranking.book_id)
+            .bind(&ranking.rank_type)
+            .bind(ranking.rank)
+            .bind(ranking.score)
+            .bind(&ranking.extra_data)
+            .bind(&ranking.period)
+            .bind(&ranking.stat_date)
+            .execute(pool)
+            .await?;
+
+        Ok(result.rows_affected())
+    }
+
 }

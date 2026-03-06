@@ -5,6 +5,7 @@ use log::error;
 use regex::Regex;
 use scraper::{ElementRef, Selector};
 use std::time::Duration;
+use chrono::NaiveDateTime;
 use tracing::info;
 
 /// http://www.qiqixs.info/xuanhuan/
@@ -127,8 +128,8 @@ async fn parse_book_info(html: &str, category_id: i64) {
         view_count: 0,
         price: 200,
         is_deleted: 0,
-        created_at: update_time.to_string(),
-        updated_at: update_time.to_string(),
+        created_at: NaiveDateTime::default(),
+        updated_at: NaiveDateTime::default(),
     };
 
     match Book::create_book(&pool, &book).await {

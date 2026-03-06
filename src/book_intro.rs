@@ -1,11 +1,13 @@
 use crate::database::get_mysql_connection;
 use crate::structs::Book;
+use chrono::NaiveDateTime;
 use log::{error, info};
 use scraper::Html;
+use sqlx::{Error, MySql, Pool};
 use std::str::FromStr;
 use std::time::Duration;
 
-pub async fn reptile_book_intro(book_num: &str) -> Result<i64, String> {
+pub async fn reptile_book_intro(pool: &Pool<MySql>,book_num: &str) -> Result<i64, String> {
     let base_url = "http://www.qiqixs.info/";
     let http_client = reqwest::ClientBuilder::new()
         .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0")
@@ -18,15 +20,12 @@ pub async fn reptile_book_intro(book_num: &str) -> Result<i64, String> {
         .send()
         .await
         .map_err(|e| e.to_string())?;
-
     let html = res.text().await.map_err(|e| e.to_string())?;
-
     let document = Html::parse_document(&html);
-
-    parse_book_intro(&document).await
+    parse_book_intro(pool, &document).await
 }
 
-async fn parse_book_intro(document: &Html) -> Result<i64, String> {
+async fn parse_book_intro(pool: &Pool<MySql>, document: &Html) -> Result<i64, String> {
     use log::info;
     use regex::Regex;
     use scraper::{ElementRef, Selector};
@@ -39,6 +38,17 @@ async fn parse_book_intro(document: &Html) -> Result<i64, String> {
         .unwrap_or_default()
         .trim()
         .to_string();
+    if name.trim().is_empty() {
+        return Ok(0);
+    }
+    match Book::get_book_by_name(pool, &name).await {
+        Ok(Some(v)) => {
+            info!("Book {} already exists", name);
+            return Ok(v.id.unwrap());
+        }
+        Err(e) => return Err(e.to_string()),
+        _ => {}
+    };
 
     // 作者
     let author = document
@@ -135,7 +145,6 @@ async fn parse_book_intro(document: &Html) -> Result<i64, String> {
     info!("封面: {}", cover);
     info!("简介: {}", intro);
 
-    let pool = get_mysql_connection().await;
     let book = Book {
         id: None,
         name: name.clone(),
@@ -150,10 +159,10 @@ async fn parse_book_intro(document: &Html) -> Result<i64, String> {
         view_count: i64::from_str(&read_count).map_or_else(|_| 0, |v| v),
         price: 200,
         is_deleted: 0,
-        created_at: update_time.to_string(),
-        updated_at: update_time.to_string(),
+        created_at: NaiveDateTime::default(),
+        updated_at: NaiveDateTime::default(),
     };
-    match Book::create_book(&pool, &book).await {
+    match Book::create_book(pool, &book).await {
         Ok(id) => Ok(id as i64),
         Err(e) => {
             error!("添加书籍[{}]失败: {}", name, e);
@@ -175,6 +184,5 @@ mod test {
             .pretty()
             .init();
         let book_num = "15785";
-        reptile_book_intro(book_num).await.unwrap();
     }
 }

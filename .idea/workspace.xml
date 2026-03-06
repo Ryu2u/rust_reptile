@@ -12,18 +12,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="99be1d03-7023-4f48-be9f-c8b12398b718" name="Changes" comment="sort file name">
-      <change afterPath="$PROJECT_DIR$/src/book_category.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/book_intro.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/reptile.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/structs.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/toplist.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/utils.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/book_category.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/book_category.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/book_intro.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/book_intro.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/database.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/database.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/reptile.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/reptile.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/structs.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/structs.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/toplist.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/toplist.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/utils.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -59,6 +58,7 @@
     "Cargo.Test reptile::test::test_reptile_category.executor": "Run",
     "Cargo.Test tests::test_merge_book.executor": "Run",
     "Cargo.Test toplist::test::test_book_intro.executor": "Run",
+    "Cargo.Test utils::tests::test_download_img.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
@@ -84,24 +84,7 @@
     ]
   }
 }]]></component>
-  <component name="RunManager" selected="Cargo.Test toplist::test::test_book_intro">
-    <configuration name="Run rust_reptile" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
-      <option name="command" value="run --package rust_reptile --bin rust_reptile" />
-      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
-      <envs />
-      <option name="emulateTerminal" value="true" />
-      <option name="channel" value="DEFAULT" />
-      <option name="requiredFeatures" value="true" />
-      <option name="allFeatures" value="false" />
-      <option name="withSudo" value="false" />
-      <option name="buildTarget" value="REMOTE" />
-      <option name="backtrace" value="SHORT" />
-      <option name="isRedirectInput" value="false" />
-      <option name="redirectInputPath" value="" />
-      <method v="2">
-        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
-      </method>
-    </configuration>
+  <component name="RunManager" selected="Cargo.Test utils::tests::test_download_img">
     <configuration name="Run" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
       <option name="buildProfileId" value="dev" />
       <option name="command" value="run --package rust_reptile --bin rust_reptile" />
@@ -190,13 +173,31 @@
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
       </method>
     </configuration>
+    <configuration name="Test utils::tests::test_download_img" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="buildProfileId" value="test" />
+      <option name="command" value="test --package rust_reptile --bin rust_reptile utils::tests::test_download_img -- --exact" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <envs />
+      <option name="emulateTerminal" value="true" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="buildTarget" value="REMOTE" />
+      <option name="backtrace" value="SHORT" />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Cargo.Test utils::tests::test_download_img" />
         <item itemvalue="Cargo.Test toplist::test::test_book_intro" />
         <item itemvalue="Cargo.Test book_intro::test::test_book_intro" />
         <item itemvalue="Cargo.Test reptile::test::test_reptile_category" />
         <item itemvalue="Cargo.Test tests::test_merge_book" />
-        <item itemvalue="Cargo.Run rust_reptile" />
       </list>
     </recent_temporary>
   </component>
@@ -220,7 +221,7 @@
       <workItem from="1749693862692" duration="960000" />
       <workItem from="1749707274884" duration="57000" />
       <workItem from="1768543309178" duration="9986000" />
-      <workItem from="1772436438333" duration="23495000" />
+      <workItem from="1772436438333" duration="35692000" />
     </task>
     <task id="LOCAL-00001" summary="sort file name">
       <option name="closed" value="true" />
@@ -230,7 +231,15 @@
       <option name="project" value="LOCAL" />
       <updated>1768547771862</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="sort file name">
+      <option name="closed" value="true" />
+      <created>1772694031042</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1772694031042</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
