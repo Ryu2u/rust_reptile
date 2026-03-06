@@ -5,7 +5,7 @@ use futures::StreamExt;
 use futures::stream::FuturesUnordered;
 use log::error;
 use reqwest::header;
-use scraper::{ElementRef, Html, Node, Selector};
+use scraper::{Html, Node, Selector};
 use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::Path;
 use std::str::FromStr;

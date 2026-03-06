@@ -5,21 +5,21 @@ use sqlx::{FromRow, MySql, Pool};
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Book {
-    pub id: Option<i64>,             // bigint
-    pub name: String,                // varchar(100) NOT NULL
-    pub author: String,              // varchar(100) NOT NULL
-    pub cover_url: Option<String>,   // varchar(255) DEFAULT NULL
-    pub path_url: Option<String>,    // varchar(255) DEFAULT NULL
-    pub description: Option<String>, // text DEFAULT NULL
-    pub category_id: Option<i64>,    // bigint DEFAULT NULL
-    pub word_count: i32,             // int DEFAULT 0
-    pub chapter_count: i32,          // int DEFAULT 0
-    pub status: i8,                  // tinyint DEFAULT 0
-    pub view_count: i64,             // bigint DEFAULT 0
-    pub price: i32,                  // int NOT NULL DEFAULT 0
-    pub is_deleted: i32,             // int NOT NULL DEFAULT 0
-    pub created_at: chrono::NaiveDateTime,          // datetime
-    pub updated_at: chrono::NaiveDateTime,          // datetime
+    pub id: Option<i64>,                   // bigint
+    pub name: String,                      // varchar(100) NOT NULL
+    pub author: String,                    // varchar(100) NOT NULL
+    pub cover_url: Option<String>,         // varchar(255) DEFAULT NULL
+    pub path_url: Option<String>,          // varchar(255) DEFAULT NULL
+    pub description: Option<String>,       // text DEFAULT NULL
+    pub category_id: Option<i64>,          // bigint DEFAULT NULL
+    pub word_count: i32,                   // int DEFAULT 0
+    pub chapter_count: i32,                // int DEFAULT 0
+    pub status: i8,                        // tinyint DEFAULT 0
+    pub view_count: i64,                   // bigint DEFAULT 0
+    pub price: i32,                        // int NOT NULL DEFAULT 0
+    pub is_deleted: i32,                   // int NOT NULL DEFAULT 0
+    pub created_at: chrono::NaiveDateTime, // datetime
+    pub updated_at: chrono::NaiveDateTime, // datetime
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -41,7 +41,7 @@ pub struct BookCategory {
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct BookChapter {
-    pub id: Option<i64>,                   // bigint NOT NULL
+    pub id: Option<i64>,           // bigint NOT NULL
     pub book_id: i64,              // bigint NOT NULL
     pub title: String,             // varchar(200) NOT NULL
     pub chapter_index: i32,        // int NOT NULL
@@ -136,7 +136,10 @@ impl Book {
             .await
     }
 
-    pub async fn get_book_by_name(pool: &Pool<MySql>, name: &str) -> Result<Option<Book>, sqlx::Error> {
+    pub async fn get_book_by_name(
+        pool: &Pool<MySql>,
+        name: &str,
+    ) -> Result<Option<Book>, sqlx::Error> {
         sqlx::query_as::<_, Book>("SELECT * FROM t_book WHERE name = ? AND is_deleted = 0")
             .bind(name)
             .fetch_optional(pool)
@@ -285,9 +288,7 @@ impl Bookshelf {
     }
 }
 
-
-
-impl BookRanking{
+impl BookRanking {
     pub async fn insert_ranking(
         pool: &sqlx::MySqlPool,
         ranking: &BookRanking,
@@ -297,17 +298,17 @@ impl BookRanking{
         INSERT INTO t_book_ranking
         (book_id, rank_type, `rank`, score, extra_data, period, stat_date)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-        "#
+        "#,
         )
-            .bind(ranking.book_id)
-            .bind(&ranking.rank_type)
-            .bind(ranking.rank)
-            .bind(ranking.score)
-            .bind(&ranking.extra_data)
-            .bind(&ranking.period)
-            .bind(&ranking.stat_date)
-            .execute(pool)
-            .await?;
+        .bind(ranking.book_id)
+        .bind(&ranking.rank_type)
+        .bind(ranking.rank)
+        .bind(ranking.score)
+        .bind(&ranking.extra_data)
+        .bind(&ranking.period)
+        .bind(&ranking.stat_date)
+        .execute(pool)
+        .await?;
 
         Ok(result.rows_affected())
     }
@@ -328,14 +329,14 @@ impl BookRanking{
         AND (stat_date <=> ?)
         ORDER BY rank ASC
         LIMIT ?
-        "#
+        "#,
         )
-            .bind(rank_type)
-            .bind(period)
-            .bind(stat_date)
-            .bind(limit)
-            .fetch_all(pool)
-            .await?;
+        .bind(rank_type)
+        .bind(period)
+        .bind(stat_date)
+        .bind(limit)
+        .fetch_all(pool)
+        .await?;
         Ok(list)
     }
 
@@ -355,14 +356,14 @@ impl BookRanking{
           AND period = ?
           AND stat_date <=> ?
         LIMIT 1
-        "#
+        "#,
         )
-            .bind(rank_type)
-            .bind(book_id)
-            .bind(period)
-            .bind(stat_date)
-            .fetch_optional(pool)
-            .await?;
+        .bind(rank_type)
+        .bind(book_id)
+        .bind(period)
+        .bind(stat_date)
+        .fetch_optional(pool)
+        .await?;
 
         Ok(result.is_some())
     }
@@ -381,19 +382,18 @@ impl BookRanking{
             score = VALUES(score),
             extra_data = VALUES(extra_data),
             updated_at = CURRENT_TIMESTAMP
-        "#
+        "#,
         )
-            .bind(ranking.book_id)
-            .bind(&ranking.rank_type)
-            .bind(ranking.rank)
-            .bind(ranking.score)
-            .bind(&ranking.extra_data)
-            .bind(&ranking.period)
-            .bind(&ranking.stat_date)
-            .execute(pool)
-            .await?;
+        .bind(ranking.book_id)
+        .bind(&ranking.rank_type)
+        .bind(ranking.rank)
+        .bind(ranking.score)
+        .bind(&ranking.extra_data)
+        .bind(&ranking.period)
+        .bind(&ranking.stat_date)
+        .execute(pool)
+        .await?;
 
         Ok(result.rows_affected())
     }
-
 }

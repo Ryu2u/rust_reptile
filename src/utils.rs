@@ -1,7 +1,5 @@
 use anyhow::anyhow;
 use futures::StreamExt;
-use log::warn;
-use regex::Captures;
 use reqwest::{ClientBuilder, Response};
 use scraper::Html;
 use std::io::Write;
@@ -15,7 +13,7 @@ pub async fn get_text_from_response(res: Response) -> Result<Html, FromUtf8Error
     }
 }
 
-
+/// download file
 pub async fn download_img(img_url: &str) -> anyhow::Result<()> {
     let http_client = ClientBuilder::new().build()?;
     let rsp = http_client.get(img_url).send().await?;

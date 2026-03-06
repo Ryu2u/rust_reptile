@@ -11,17 +11,8 @@
     </cargoProject>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="99be1d03-7023-4f48-be9f-c8b12398b718" name="Changes" comment="sort file name">
+    <list default="true" id="99be1d03-7023-4f48-be9f-c8b12398b718" name="Changes" comment="new">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/book_category.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/book_category.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/book_intro.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/book_intro.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/database.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/database.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/reptile.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/reptile.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/structs.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/structs.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/toplist.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/toplist.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/utils.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -221,7 +212,7 @@
       <workItem from="1749693862692" duration="960000" />
       <workItem from="1749707274884" duration="57000" />
       <workItem from="1768543309178" duration="9986000" />
-      <workItem from="1772436438333" duration="35692000" />
+      <workItem from="1772436438333" duration="35756000" />
     </task>
     <task id="LOCAL-00001" summary="sort file name">
       <option name="closed" value="true" />
@@ -239,7 +230,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772694031042</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="new">
+      <option name="closed" value="true" />
+      <created>1772779036444</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1772779036444</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -258,6 +257,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="sort file name" />
-    <option name="LAST_COMMIT_MESSAGE" value="sort file name" />
+    <MESSAGE value="new" />
+    <option name="LAST_COMMIT_MESSAGE" value="new" />
   </component>
 </project>

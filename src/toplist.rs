@@ -1,15 +1,12 @@
 use crate::book_intro::reptile_book_intro;
 use crate::database::get_mysql_connection;
-use crate::reptile::parse_book_directory;
 use crate::structs::{BookRanking, RankType};
-use chrono::{Local, NaiveDate, NaiveDateTime};
+use chrono::Local;
 use log::info;
 use regex::Regex;
 use reqwest::header;
 use scraper::{Html, Selector};
-use sqlx::Error;
 use std::str::FromStr;
-use std::time::Duration;
 
 struct TopList {
     book_name: String,
@@ -18,7 +15,7 @@ struct TopList {
     rank_type: RankType,
 }
 
-pub async fn reptile_toplists(toplist_type: &str,rank_type: RankType) -> Result<(), String> {
+pub async fn reptile_toplists(toplist_type: &str, rank_type: RankType) -> Result<(), String> {
     let mut headers = header::HeaderMap::new();
     headers.insert(header::ACCEPT, header::HeaderValue::from_static("*/*"));
     headers.insert(
@@ -133,7 +130,7 @@ fn parse_toplists(html: Html, rank_type: RankType) -> Vec<TopList> {
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    
 
     #[tokio::test]
     async fn test_book_intro() {

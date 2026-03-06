@@ -1,13 +1,12 @@
-use crate::database::get_mysql_connection;
 use crate::structs::Book;
 use chrono::NaiveDateTime;
 use log::{error, info};
 use scraper::Html;
-use sqlx::{Error, MySql, Pool};
+use sqlx::{MySql, Pool};
 use std::str::FromStr;
 use std::time::Duration;
 
-pub async fn reptile_book_intro(pool: &Pool<MySql>,book_num: &str) -> Result<i64, String> {
+pub async fn reptile_book_intro(pool: &Pool<MySql>, book_num: &str) -> Result<i64, String> {
     let base_url = "http://www.qiqixs.info/";
     let http_client = reqwest::ClientBuilder::new()
         .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0")
@@ -173,7 +172,7 @@ async fn parse_book_intro(pool: &Pool<MySql>, document: &Html) -> Result<i64, St
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    
 
     #[tokio::test]
     async fn test_book_intro() {

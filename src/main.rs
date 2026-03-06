@@ -6,10 +6,10 @@ mod structs;
 mod toplist;
 mod utils;
 
+use crate::structs::RankType;
 use crate::toplist::reptile_toplists;
 use std::io::Error;
 use tracing::info;
-use crate::structs::RankType;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -20,7 +20,9 @@ async fn main() -> Result<(), Error> {
         .pretty()
         .init();
     info!("=========== initializing ========");
-    reptile_toplists("weekvisit",RankType::HotSales).await.unwrap();
+    reptile_toplists("weekvisit", RankType::HotSales)
+        .await
+        .unwrap();
     Ok(())
 }
 

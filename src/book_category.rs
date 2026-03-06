@@ -1,11 +1,11 @@
 use crate::database::get_mysql_connection;
 use crate::structs::Book;
 use crate::utils::get_text_from_response;
+use chrono::NaiveDateTime;
 use log::error;
 use regex::Regex;
 use scraper::{ElementRef, Selector};
 use std::time::Duration;
-use chrono::NaiveDateTime;
 use tracing::info;
 
 /// http://www.qiqixs.info/xuanhuan/
