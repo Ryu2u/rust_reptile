@@ -1,47 +1,43 @@
 use crate::database::get_mysql_connection;
 use crate::structs::Book;
 use crate::utils::get_text_from_response;
+use anyhow::anyhow;
 use chrono::NaiveDateTime;
 use log::error;
 use regex::Regex;
-use scraper::{ElementRef, Selector};
+use scraper::{ElementRef, Html, Selector};
 use std::time::Duration;
 use tracing::info;
 
 /// http://www.qiqixs.info/xuanhuan/
-pub async fn reptile_category(base_url: &str, category_url: &str) -> Option<()> {
+pub async fn reptile_category(base_url: &str, category_url: &str) -> anyhow::Result<()> {
     let http_client = reqwest::ClientBuilder::new()
         .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0")
         .connect_timeout(Duration::from_secs(3))
-        .build()
-        .unwrap();
+        .build()?;
     let res = http_client
         .get(&format!("{}{}", base_url, category_url))
         .send()
-        .await
-        .unwrap();
+        .await?;
     if res.status().as_u16() != 200 {
         error!("request failed: {}", res.status());
-        return None;
+        return Err(anyhow::anyhow!("request failed: {}", res.status()));
     }
-    let doc = match get_text_from_response(res).await {
-        Ok(x) => x,
-        Err(e) => {
-            error!("{}", e);
-            return None;
-        }
-    };
+
+    let html = res.text().await.map_err(|e| e)?;
+    let doc = Html::parse_document(&html);
     // 获取
-    let book_class = Selector::parse(".book").unwrap();
+    let book_class =
+        Selector::parse(".book").map_err(|e| anyhow!("invalid book selector: {}", e))?;
     let book_vec: Vec<ElementRef> = doc.select(&book_class).map(|v| v).collect();
     for v in book_vec {
         info!("{:?}", v.inner_html());
-        parse_book_info(&v.inner_html(), 1).await;
+        parse_book_info(&v.inner_html(), 1).await?;
     }
-    Some(())
+    Ok(())
 }
-async fn parse_book_info(html: &str, category_id: i64) {
-    let cover_re = Regex::new(r#"<img[^>]*src="([^"]+)""#).unwrap();
+async fn parse_book_info(html: &str, category_id: i64) -> anyhow::Result<()> {
+    let cover_re = Regex::new(r#"<img[^>]*src="([^"]+)""#)?;
     let cover = cover_re
         .captures(html)
         .and_then(|cap| cap.get(1))
@@ -50,7 +46,7 @@ async fn parse_book_info(html: &str, category_id: i64) {
 
     info!("封面: {}", cover);
 
-    let name_re = Regex::new(r#"<h2>\s*<a[^>]*>(.*?)</a>"#).unwrap();
+    let name_re = Regex::new(r#"<h2>\s*<a[^>]*>(.*?)</a>"#)?;
 
     let raw_name = name_re
         .captures(html)
@@ -68,7 +64,7 @@ async fn parse_book_info(html: &str, category_id: i64) {
     info!("书名: {}", book_name);
 
     // 2️⃣ 作者
-    let author_re = Regex::new(r#"作者：<a[^>]*>([^<]+)</a>"#).unwrap();
+    let author_re = Regex::new(r#"作者：<a[^>]*>([^<]+)</a>"#)?;
     let author = author_re
         .captures(html)
         .and_then(|cap| cap.get(1))
@@ -78,7 +74,7 @@ async fn parse_book_info(html: &str, category_id: i64) {
     info!("作者: {}", author);
 
     // 3️⃣ 更新状态
-    let status_re = Regex::new(r#"<span[^>]*>([^<]+)</span>"#).unwrap();
+    let status_re = Regex::new(r#"<span[^>]*>([^<]+)</span>"#)?;
     let status = status_re
         .captures(html)
         .and_then(|cap| cap.get(1))
@@ -94,7 +90,7 @@ async fn parse_book_info(html: &str, category_id: i64) {
     };
 
     // 4️⃣ 更新时间
-    let time_re = Regex::new(r#"更新时间：([0-9\-]+)"#).unwrap();
+    let time_re = Regex::new(r#"更新时间：([0-9\-]+)"#)?;
     let update_time = time_re
         .captures(html)
         .and_then(|cap| cap.get(1))
@@ -104,7 +100,7 @@ async fn parse_book_info(html: &str, category_id: i64) {
     info!("更新时间: {}", update_time);
 
     // 5️⃣ 简介（第一个 <p> 标签）
-    let intro_re = Regex::new(r#"<p>(.*?)</p>"#).unwrap();
+    let intro_re = Regex::new(r#"<p>(.*?)</p>"#)?;
     let intro = intro_re
         .captures(html)
         .and_then(|cap| cap.get(1))
@@ -133,9 +129,10 @@ async fn parse_book_info(html: &str, category_id: i64) {
     };
 
     match Book::create_book(&pool, &book).await {
-        Ok(_) => {}
+        Ok(_) => Ok(()),
         Err(e) => {
             error!("更新书籍[{}]失败: {}", book_name, e);
+            Err(anyhow!("更新书籍[{}]失败!", book_name))
         }
     }
 }
@@ -154,6 +151,6 @@ mod test {
             .init();
         let base_url = "http://www.qiqixs.info/";
         let category_name = "xuanhuan";
-        reptile_category(base_url, category_name).await;
+        reptile_category(base_url, category_name).await.unwrap();
     }
 }

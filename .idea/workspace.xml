@@ -11,16 +11,20 @@
     </cargoProject>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="99be1d03-7023-4f48-be9f-c8b12398b718" name="Changes" comment="new">
+    <list default="true" id="99be1d03-7023-4f48-be9f-c8b12398b718" name="Changes" comment="fmt and fix">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/utils.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/book_category.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/book_category.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/book_intro.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/book_intro.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/reptile.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/reptile.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/toplist.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/toplist.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="RsBuildProfile:test" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="RsBuildProfile:dev" />
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
@@ -46,6 +50,7 @@
     "Cargo.Run rust_reptile.executor": "Run",
     "Cargo.Run.executor": "Run",
     "Cargo.Test book_intro::test::test_book_intro.executor": "Run",
+    "Cargo.Test reptile::test::test_parse_book.executor": "Run",
     "Cargo.Test reptile::test::test_reptile_category.executor": "Run",
     "Cargo.Test tests::test_merge_book.executor": "Run",
     "Cargo.Test toplist::test::test_book_intro.executor": "Run",
@@ -75,7 +80,7 @@
     ]
   }
 }]]></component>
-  <component name="RunManager" selected="Cargo.Test utils::tests::test_download_img">
+  <component name="RunManager" selected="Cargo.Run">
     <configuration name="Run" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
       <option name="buildProfileId" value="dev" />
       <option name="command" value="run --package rust_reptile --bin rust_reptile" />
@@ -95,7 +100,25 @@
       </method>
     </configuration>
     <configuration name="Test book_intro::test::test_book_intro" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="buildProfileId" value="test" />
       <option name="command" value="test --package rust_reptile --bin rust_reptile book_intro::test::test_book_intro -- --exact" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <envs />
+      <option name="emulateTerminal" value="true" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="buildTarget" value="REMOTE" />
+      <option name="backtrace" value="SHORT" />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Test reptile::test::test_parse_book" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="command" value="test --package rust_reptile --bin rust_reptile reptile::test::test_parse_book -- --exact" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
       <envs />
       <option name="emulateTerminal" value="true" />
@@ -114,24 +137,6 @@
     <configuration name="Test reptile::test::test_reptile_category" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
       <option name="buildProfileId" value="test" />
       <option name="command" value="test --package rust_reptile --bin rust_reptile reptile::test::test_reptile_category -- --exact" />
-      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
-      <envs />
-      <option name="emulateTerminal" value="true" />
-      <option name="channel" value="DEFAULT" />
-      <option name="requiredFeatures" value="true" />
-      <option name="allFeatures" value="false" />
-      <option name="withSudo" value="false" />
-      <option name="buildTarget" value="REMOTE" />
-      <option name="backtrace" value="SHORT" />
-      <option name="isRedirectInput" value="false" />
-      <option name="redirectInputPath" value="" />
-      <method v="2">
-        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="Test tests::test_merge_book" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
-      <option name="buildProfileId" value="test" />
-      <option name="command" value="test --package rust_reptile --bin rust_reptile tests::test_merge_book -- --exact" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
       <envs />
       <option name="emulateTerminal" value="true" />
@@ -184,11 +189,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Cargo.Test book_intro::test::test_book_intro" />
+        <item itemvalue="Cargo.Test reptile::test::test_parse_book" />
         <item itemvalue="Cargo.Test utils::tests::test_download_img" />
         <item itemvalue="Cargo.Test toplist::test::test_book_intro" />
-        <item itemvalue="Cargo.Test book_intro::test::test_book_intro" />
         <item itemvalue="Cargo.Test reptile::test::test_reptile_category" />
-        <item itemvalue="Cargo.Test tests::test_merge_book" />
       </list>
     </recent_temporary>
   </component>
@@ -212,7 +217,7 @@
       <workItem from="1749693862692" duration="960000" />
       <workItem from="1749707274884" duration="57000" />
       <workItem from="1768543309178" duration="9986000" />
-      <workItem from="1772436438333" duration="35756000" />
+      <workItem from="1772436438333" duration="47676000" />
     </task>
     <task id="LOCAL-00001" summary="sort file name">
       <option name="closed" value="true" />
@@ -238,7 +243,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772779036444</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="fmt and fix">
+      <option name="closed" value="true" />
+      <created>1772779112857</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1772779112857</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -258,6 +271,7 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="sort file name" />
     <MESSAGE value="new" />
-    <option name="LAST_COMMIT_MESSAGE" value="new" />
+    <MESSAGE value="fmt and fix" />
+    <option name="LAST_COMMIT_MESSAGE" value="fmt and fix" />
   </component>
 </project>

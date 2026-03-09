@@ -7,6 +7,7 @@ use regex::Regex;
 use reqwest::header;
 use scraper::{Html, Selector};
 use std::str::FromStr;
+use crate::reptile::parse_book_directory;
 
 struct TopList {
     book_name: String,
@@ -15,7 +16,7 @@ struct TopList {
     rank_type: RankType,
 }
 
-pub async fn reptile_toplists(toplist_type: &str, rank_type: RankType) -> Result<(), String> {
+pub async fn reptile_toplists(toplist_type: &str, rank_type: RankType) -> anyhow::Result<()> {
     let mut headers = header::HeaderMap::new();
     headers.insert(header::ACCEPT, header::HeaderValue::from_static("*/*"));
     headers.insert(
@@ -25,15 +26,13 @@ pub async fn reptile_toplists(toplist_type: &str, rank_type: RankType) -> Result
     let http_client = reqwest::ClientBuilder::new()
         .user_agent("User-Agent: PostmanRuntime-ApipostRuntime/1.1.0")
         .default_headers(headers)
-        .build()
-        .unwrap();
+        .build()?;
     let res = http_client
         .get(format!("http://www.qiqixs.info/top/{}.html", toplist_type))
         .send()
-        .await
-        .map_err(|e| e.to_string())?;
+        .await?;
 
-    let html = res.text().await.map_err(|e| e.to_string())?;
+    let html = res.text().await?;
     let pool = get_mysql_connection().await;
     info!("========== reptile ========");
     let document = Html::parse_document(&html);
@@ -74,7 +73,7 @@ pub async fn reptile_toplists(toplist_type: &str, rank_type: RankType) -> Result
         BookRanking::insert_ranking(&pool, &book_ranking)
             .await
             .unwrap();
-        // parse_book_directory(&book_num, book_id).await.unwrap();
+        parse_book_directory(&item.book_num, book_id,&pool).await.unwrap();
     }
     Ok(())
 }

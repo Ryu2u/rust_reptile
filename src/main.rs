@@ -6,13 +6,15 @@ mod structs;
 mod toplist;
 mod utils;
 
-use crate::structs::RankType;
+use crate::database::get_mysql_connection;
+use crate::reptile::parse_book_directory;
+use crate::structs::{Book, RankType};
 use crate::toplist::reptile_toplists;
 use std::io::Error;
 use tracing::info;
 
 #[tokio::main]
-async fn main() -> Result<(), Error> {
+async fn main() -> anyhow::Result<()> {
     dotenv::dotenv().ok();
     tracing_subscriber::fmt()
         .with_writer(std::io::stdout)
@@ -20,9 +22,9 @@ async fn main() -> Result<(), Error> {
         .pretty()
         .init();
     info!("=========== initializing ========");
-    reptile_toplists("weekvisit", RankType::HotSales)
-        .await
-        .unwrap();
+    let pool = get_mysql_connection().await;
+    parse_book_directory("19444", 1, &pool).await?;
+    // reptile_toplists("weekvisit", RankType::HotSales).await?;
     Ok(())
 }
 

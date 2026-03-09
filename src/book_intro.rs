@@ -1,4 +1,5 @@
 use crate::structs::Book;
+use anyhow::anyhow;
 use chrono::NaiveDateTime;
 use log::{error, info};
 use scraper::Html;
@@ -6,7 +7,7 @@ use sqlx::{MySql, Pool};
 use std::str::FromStr;
 use std::time::Duration;
 
-pub async fn reptile_book_intro(pool: &Pool<MySql>, book_num: &str) -> Result<i64, String> {
+pub async fn reptile_book_intro(pool: &Pool<MySql>, book_num: &str) -> anyhow::Result<i64> {
     let base_url = "http://www.qiqixs.info/";
     let http_client = reqwest::ClientBuilder::new()
         .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0")
@@ -17,14 +18,13 @@ pub async fn reptile_book_intro(pool: &Pool<MySql>, book_num: &str) -> Result<i6
     let res = http_client
         .get(&format!("{}/book/{}.html", base_url, book_num))
         .send()
-        .await
-        .map_err(|e| e.to_string())?;
-    let html = res.text().await.map_err(|e| e.to_string())?;
+        .await?;
+    let html = res.text().await?;
     let document = Html::parse_document(&html);
     parse_book_intro(pool, &document).await
 }
 
-async fn parse_book_intro(pool: &Pool<MySql>, document: &Html) -> Result<i64, String> {
+async fn parse_book_intro(pool: &Pool<MySql>, document: &Html) -> anyhow::Result<i64> {
     use log::info;
     use regex::Regex;
     use scraper::{ElementRef, Selector};
@@ -45,7 +45,7 @@ async fn parse_book_intro(pool: &Pool<MySql>, document: &Html) -> Result<i64, St
             info!("Book {} already exists", name);
             return Ok(v.id.unwrap());
         }
-        Err(e) => return Err(e.to_string()),
+        Err(e) => return Err(anyhow!("{}", e)),
         _ => {}
     };
 
@@ -83,8 +83,7 @@ async fn parse_book_intro(pool: &Pool<MySql>, document: &Html) -> Result<i64, St
         .unwrap_or_default();
 
     let stat_re =
-        Regex::new(r"阅读：(\d+).*?收藏：(\d+).*?推荐：(\d+).*?字数：(\d+).*?更新：([\d\-:\s]+)")
-            .unwrap();
+        Regex::new(r"阅读：(\d+).*?收藏：(\d+).*?推荐：(\d+).*?字数：(\d+).*?更新：([\d\-:\s]+)")?;
 
     let (read_count, collect_count, recommend_count, word_count, update_time) =
         if let Some(c) = stat_re.captures(&stat_text) {
@@ -165,14 +164,15 @@ async fn parse_book_intro(pool: &Pool<MySql>, document: &Html) -> Result<i64, St
         Ok(id) => Ok(id as i64),
         Err(e) => {
             error!("添加书籍[{}]失败: {}", name, e);
-            Err(format!("{}", e))
+            Err(anyhow!("{}", e))
         }
     }
 }
 
 #[cfg(test)]
 mod test {
-    
+    use crate::book_intro::reptile_book_intro;
+    use crate::database::get_mysql_connection;
 
     #[tokio::test]
     async fn test_book_intro() {
@@ -182,6 +182,8 @@ mod test {
             .with_max_level(tracing::Level::INFO)
             .pretty()
             .init();
-        let book_num = "15785";
+        let book_num = "234621";
+        let pool = get_mysql_connection().await;
+        reptile_book_intro(&pool, book_num).await.unwrap();
     }
 }
